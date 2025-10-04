@@ -1,6 +1,6 @@
 CREATE DATABASE smart_investment;
-
 USE smart_investment;
+SET foreign_key_checks = 0;
 
 CREATE TABLE usuario (
 idUsuario INT PRIMARY KEY AUTO_INCREMENT,
@@ -27,9 +27,10 @@ dtAtual DATE NOT NULL,
 precoAbertura DOUBLE NOT NULL,
 precoFechamento DOUBLE NOT NULL,
 precoMaisAlto DOUBLE NOT NULL,
+ticker VARCHAR(10) NOT NULL,
 precoMaisBaixo DOUBLE NOT NULL,
 volume DOUBLE NOT NULL,
-fkEmpresa INT NOT NULL,
+fkEmpresa INT,
 CONSTRAINT fkAcoesEmpresa FOREIGN KEY (fkEmpresa) REFERENCES empresa(idEmpresa)
 );
 
@@ -72,8 +73,13 @@ mensagemErro VARCHAR(80)
 -- ('Petrobras', 'PETR4', 'Energia', 'petrobras_logo.png'),
 -- ('Itaú Unibanco', 'ITUB4', 'Financeiro', 'itau_logo.png');
 
--- INSERT INTO acoes (dtAtual, precoAbertura, precoFechamento, precoMaisAlto, precoMaisBaixo, volume, fkEmpresa) VALUES
--- ('2025-09-30', 65.20, 66.50, 67.00, 64.90, 1000000, 1), 
+-- INSERT INTO acoes (
+--  dtAtual, precoAbertura, precoFechamento, precoMaisAlto, precoMaisBaixo, volume, ticker, fkEmpresa
+-- ) VALUES (
+--  '2025-09-30', 65.20, 66.50, 67.00, 64.90, 1000000, 'PETR4',
+-- (SELECT idEmpresa FROM empresa WHERE ticker = 'PETR4')
+-- );
+
 -- ('2025-09-30', 34.10, 35.00, 35.50, 33.80, 2500000, 2), 
 -- ('2025-09-30', 28.00, 27.50, 28.40, 27.30, 1800000, 3);
 
@@ -141,10 +147,17 @@ LEFT JOIN log l ON l.dtLog = (
 );
 
 -- SELECT * FROM dados;
+SELECT * FROM empresa order by ticker asc;
+SELECT * FROM empresa;
+SELECT * FROM acoes;
+SELECT COUNT(*) FROM acoes;
+
+ 
 
 
 
-
+select* FROM acoes order by dtAtual desc;
+truncate table empresa ;
 
 
 
