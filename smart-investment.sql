@@ -27,7 +27,6 @@ dtAtual DATE NOT NULL,
 precoAbertura DOUBLE NOT NULL,
 precoFechamento DOUBLE NOT NULL,
 precoMaisAlto DOUBLE NOT NULL,
-ticker VARCHAR(10) NOT NULL,
 precoMaisBaixo DOUBLE NOT NULL,
 volume DOUBLE NOT NULL,
 fkEmpresa INT,
@@ -98,7 +97,7 @@ mensagemErro VARCHAR(80)
 -- ('Alerta', NOW(), 'Petrobras caiu 5% em um dia'),
 -- ('Erro', NOW(), 'Falha ao enviar notificação por e-mail');
 
-CREATE VIEW dados AS
+/* CREATE VIEW dados AS
 SELECT
     -- usuário
     u.idUsuario,
@@ -150,14 +149,17 @@ LEFT JOIN log l ON l.dtLog = (
 SELECT * FROM empresa order by ticker asc;
 SELECT * FROM empresa;
 SELECT * FROM acoes;
+SELECT * FROM log;
+
 SELECT COUNT(*) FROM acoes;
+
 
  
 
 
 
-select* FROM acoes order by dtAtual desc;
-truncate table empresa ;
+-- select* FROM acoes order by dtAtual desc;
+truncate table empresa ; */
 
 
 
