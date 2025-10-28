@@ -59,7 +59,7 @@ tipo VARCHAR(255),
 CONSTRAINT chkTipoLog
 		CHECK (tipo IN ('Sucesso', 'Alerta', 'Erro')),
 dtLog DATETIME NOT NULL,
-mensagemErro VARCHAR(80)
+mensagemErro TEXT
 );
 
 -- INSERT INTO usuario (nome, dtNascimento, email, senha, perfil) VALUES
