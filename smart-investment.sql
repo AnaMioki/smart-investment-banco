@@ -62,8 +62,6 @@ dtLog DATETIME NOT NULL,
 mensagemErro TEXT
 );
 
-drop table infoTemporal;
-
 CREATE TABLE infoTemporal (
 idInfo INT AUTO_INCREMENT,
 valorMercado DOUBLE,
