@@ -1,4 +1,4 @@
-CREATE DATABASE smart_investment;
+CREATE DATABASE IF NOT EXISTS smart_investment;
 USE smart_investment;
 SET foreign_key_checks = 0;
 
