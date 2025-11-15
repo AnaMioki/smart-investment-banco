@@ -62,6 +62,26 @@ dtLog DATETIME NOT NULL,
 mensagemErro TEXT
 );
 
+drop table infoTemporal;
+
+CREATE TABLE infoTemporal (
+idInfo INT AUTO_INCREMENT,
+valorMercado DOUBLE,
+partrimonioLiquido DOUBLE,
+patrimonioLiquidoAcao DOUBLE,
+multiploSetorial INT,
+rentabilidadeAnual DOUBLE,
+infoTemporalcol DOUBLE,
+precoSobreValorPatrimonial DOUBLE,
+EBTDA DOUBLE,
+DRE DOUBLE,
+fkEmpresa INT,
+CONSTRAINT fkEmpresainfo FOREIGN KEY(fkEmpresa) REFERENCES empresa (idEmpresa),
+CONSTRAINT primariesKeyInfoEmpresa PRIMARY KEY (idInfo, fkEmpresa)
+);
+
+
+
 -- INSERT INTO usuario (nome, dtNascimento, email, senha, perfil) VALUES
 -- ('Juliana Santos', '1990-05-12', 'juliana.santos@email.com', 'senha123', 'Conservador'),
 -- ('Bruno Cordeiro', '1985-09-23', 'bruno.cordeiro@email.com', 'senha123', 'Moderado'),
