@@ -73,7 +73,7 @@ infoTemporalcol DOUBLE,
 precoSobreValorPatrimonial DOUBLE,
 EBTDA DOUBLE,
 DRE DOUBLE,
-fkEmpresa INT,
+fkEmpresa INT NOT NULL,
 ano INT,
 CONSTRAINT fkEmpresainfo FOREIGN KEY(fkEmpresa) REFERENCES empresa (idEmpresa),
 CONSTRAINT primariesKeyInfoEmpresa PRIMARY KEY (idInfo, fkEmpresa)
@@ -242,7 +242,7 @@ INSERT INTO infoTemporal (valorMercado, partrimonioLiquido, patrimonioLiquidoAca
 (450.50, 280.30, 35.20, 8, 9, 1.98, 45.60, 120.30, 1, 2024),
 (45.20, 28.40, 3.15, 15, 22.1, 3.20, 8.90, 25.30, 5, 2025);
 
-/*-- Consultas para verificação dos dados
+-- Consultas para verificação dos dados
 SELECT '=== USUÁRIOS ===' AS '';
 SELECT * FROM usuario;
 
@@ -276,7 +276,7 @@ SELECT it.*, e.ticker
 FROM infoTemporal it
 JOIN empresa e ON it.fkEmpresa = e.idEmpresa;
 
---        VIEW PARA PUXAR AS INFORMAÇÕES     --
+/*--        VIEW PARA PUXAR AS INFORMAÇÕES     --
 CREATE VIEW vw_dash_setores AS
 SELECT 
     e.setor,
@@ -413,11 +413,9 @@ SELECT
          SELECT DISTINCT ano 
          FROM infoTemporal it3 
          WHERE it3.fkEmpresa = it.fkEmpresa 
-         ORDER BY ano DESC 
-         LIMIT 3
-     )) AS retorno_medio_3_anos,
+         ORDER BY ano DESC)) AS retorno_medio_3_anos
     
-    -- Média dos últimos 2 anos
+   /* -- Média dos últimos 2 anos
     (SELECT AVG(rentabilidadeAnual) 
      FROM infoTemporal it2 
      WHERE it2.fkEmpresa = it.fkEmpresa 
@@ -425,22 +423,19 @@ SELECT
          SELECT DISTINCT ano 
          FROM infoTemporal it3 
          WHERE it3.fkEmpresa = it.fkEmpresa 
-         ORDER BY ano DESC 
-         LIMIT 2
-     )) AS retorno_medio_2_anos,
+         ORDER BY ano DESC)) AS retorno_medio_2_anos,
     
     -- Último ano apenas
     (SELECT rentabilidadeAnual 
      FROM infoTemporal it2 
      WHERE it2.fkEmpresa = it.fkEmpresa 
-     ORDER BY ano DESC 
-     LIMIT 1) AS retorno_1_ano
+     ORDER BY ano DESC ) AS retorno_1_ano
 
 FROM infoTemporal it
 GROUP BY it.fkEmpresa;
 
 -- ---------
-
+select retorno_medio from vw_dash_setores join infoTemporal i on i.fkEmpresa = e.idEmpresa where ano = 2025;
 
 select melhor_performer from vw_dash_setores;
 drop view vw_dash_setores;
