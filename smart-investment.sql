@@ -285,7 +285,7 @@ SELECT
     AVG(((a.precoMaisAlto - a.precoMaisBaixo) / a.precoAbertura) * 100) AS volatilidade_media,
     AVG(it.patrimonioLiquidoAcao) AS patrimonio_liquido_por_acao,
     
-    -- Cálculo do DRE conforme especificado
+    -- Cálculo do DRE 
     AVG((it.valorMercado - it.partrimonioLiquido) / it.partrimonioLiquido) AS dre_medio,
     
     -- EBITDA calculado como valorMercado / múltiploSetorial
@@ -394,7 +394,50 @@ ORDER BY a.dtAtual DESC
 LIMIT 1;
 
 --  -------------------------------------------------------------------------------------
+SELECT 
+    fkEmpresa,
+    AVG(rentabilidadeAnual) AS retorno_medio_3_anos
+FROM infoTemporal
+WHERE ano >= (SELECT MAX(ano) - 2 FROM infoTemporal it2 WHERE it2.fkEmpresa = infoTemporal.fkEmpresa)
+GROUP BY fkEmpresa;
 
+-- -----  SELECT DO RETORNO LEVANDO EM CONSIDERAÇÃO OS ANOS DOS FILTROS, 1, 2 E 3 ANOS --
+SELECT 
+    -- Média dos últimos 3 anos
+    (SELECT AVG(rentabilidadeAnual) 
+     FROM infoTemporal it2 
+     WHERE it2.fkEmpresa = it.fkEmpresa 
+     AND it2.ano IN (
+         SELECT DISTINCT ano 
+         FROM infoTemporal it3 
+         WHERE it3.fkEmpresa = it.fkEmpresa 
+         ORDER BY ano DESC 
+         LIMIT 3
+     )) AS retorno_medio_3_anos,
+    
+    -- Média dos últimos 2 anos
+    (SELECT AVG(rentabilidadeAnual) 
+     FROM infoTemporal it2 
+     WHERE it2.fkEmpresa = it.fkEmpresa 
+     AND it2.ano IN (
+         SELECT DISTINCT ano 
+         FROM infoTemporal it3 
+         WHERE it3.fkEmpresa = it.fkEmpresa 
+         ORDER BY ano DESC 
+         LIMIT 2
+     )) AS retorno_medio_2_anos,
+    
+    -- Último ano apenas
+    (SELECT rentabilidadeAnual 
+     FROM infoTemporal it2 
+     WHERE it2.fkEmpresa = it.fkEmpresa 
+     ORDER BY ano DESC 
+     LIMIT 1) AS retorno_1_ano
+
+FROM infoTemporal it
+GROUP BY it.fkEmpresa;
+
+-- ---------
 
 
 select melhor_performer from vw_dash_setores;
@@ -402,9 +445,11 @@ drop view vw_dash_setores;
 
 select retorno_medio from vw_dash_setores;
 describe infoTemporal;
+describe empresa;
 
 select avg(rentabilidadeAnual) from infoTemporal i join empresa e on i.fkEmpresa = e.idEmpresa;
-
+select dtAtual from acoes;
+describe acoes;
 DROP VIEW vw_dash_setores;
 show tables;
 select ebitda from vw_dash_setores;
