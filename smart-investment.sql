@@ -242,7 +242,7 @@ INSERT INTO infoTemporal (valorMercado, partrimonioLiquido, patrimonioLiquidoAca
 (450.50, 280.30, 35.20, 8, 9, 1.98, 45.60, 120.30, 1, 2024),
 (45.20, 28.40, 3.15, 15, 22.1, 3.20, 8.90, 25.30, 5, 2025);
 
--- Consultas para verificação dos dados
+/*-- Consultas para verificação dos dados
 SELECT '=== USUÁRIOS ===' AS '';
 SELECT * FROM usuario;
 
@@ -454,4 +454,4 @@ select dtAtual from acoes;
 describe acoes;
 -- DROP VIEW vw_dash_setores;
 show tables;
-select ebitda from vw_dash_setores;
+select ebitda from vw_dash_setores; */
