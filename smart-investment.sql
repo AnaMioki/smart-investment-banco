@@ -182,3 +182,229 @@ truncate table empresa ; */
 
 
 
+--             INSERT PARA AJUDAR A ENTENDER OS DADOS      --
+ 
+-- Inserir usuários
+INSERT INTO usuario (nome, dtNascimento, email, senha, perfil) VALUES
+('Ana Silva', '1985-03-15', 'ana.silva@email.com', '$2y$10$abc123', 'Conservador'),
+('Carlos Oliveira', '1992-07-22', 'carlos.oliveira@email.com', '$2y$10$def456', 'Moderado'),
+('Marina Costa', '1988-11-30', 'marina.costa@email.com', '$2y$10$ghi789', 'Arrojado'),
+('Roberto Santos', '1979-05-18', 'roberto.santos@email.com', '$2y$10$jkl012', 'Conservador'),
+('Juliana Lima', '1995-09-25', 'juliana.lima@email.com', '$2y$10$mno345', 'Moderado');
+
+-- Inserir empresas
+INSERT INTO empresa (nome, ticker, setor, logo) VALUES
+('Vale S.A.', 'VALE3', 'Mineração', 'vale_logo.png'),
+('Petrobras', 'PETR4', 'Energia', 'petrobras_logo.png'),
+('Itaú Unibanco', 'ITUB4', 'Financeiro', 'itau_logo.png'),
+('Ambev S.A.', 'ABEV3', 'Bebidas', 'ambev_logo.png'),
+('Magazine Luiza', 'MGLU3', 'Varejo', 'magalu_logo.png');
+
+-- Inserir ações
+INSERT INTO acoes (dtAtual, precoAbertura, precoFechamento, precoMaisAlto, precoMaisBaixo, volume, fkEmpresa) VALUES
+('2024-05-20', 68.90, 70.15, 71.20, 68.50, 25000000, 1),
+('2024-05-20', 32.45, 33.10, 33.80, 32.10, 18000000, 2),
+('2024-05-20', 34.20, 35.05, 35.60, 34.00, 22000000, 3),
+('2024-05-20', 14.80, 15.25, 15.40, 14.65, 15000000, 4),
+('2024-05-20', 2.15, 2.08, 2.20, 2.05, 35000000, 5);
+
+-- Inserir ações favoritadas
+INSERT INTO acoesFavoritadas (fkAcoes, fkUsuario) VALUES
+(1, 1), -- Ana favorita Vale
+(3, 2), -- Carlos favorita Itaú
+(5, 3), -- Marina favorita Magazine Luiza
+(2, 4), -- Roberto favorita Petrobras
+(4, 5); -- Juliana favorita Ambev
+
+-- Inserir notificações
+INSERT INTO notificacoes (tipo, mensagem, fkAcoes, fkUsuario) VALUES
+('Ação Favoritada', 'VALE3 atingiu seu preço-alvo recomendado', 1, 1),
+('Alerta', 'PETR4 caiu mais de 2% no dia', 2, 2),
+('Ação sugerida', 'ITUB4 é uma boa oportunidade para seu perfil', 3, 3),
+('Alerta', 'ABEV3 apresentou alta volumétrica', 4, 4),
+('Ação Favoritada', 'MGLU3 atingiu nova máxima do mês', 5, 5);
+
+-- Inserir registros de log
+INSERT INTO log (tipo, dtLog, mensagemErro) VALUES
+('Sucesso', NOW(), 'Usuário 1 favoritou ação VALE3 com sucesso'),
+('Alerta', NOW(), 'Variação anormal detectada em PETR4'),
+('Erro', NOW(), 'Falha no envio de email para usuário 3'),
+('Sucesso', NOW(), 'Cálculo de indicadores concluído para 05/05/2024'),
+('Alerta', NOW(), 'Tentativa de acesso não autorizado detectada');
+
+-- Inserir informações temporais
+INSERT INTO infoTemporal (valorMercado, partrimonioLiquido, patrimonioLiquidoAcao, multiploSetorial, rentabilidadeAnual, precoSobreValorPatrimonial, EBTDA, DRE, fkEmpresa) VALUES
+(450.50, 280.30, 35.20, 8, 12.5, 1.98, 45.60, 120.30, 1),
+(320.25, 190.15, 28.10, 6, 8.7, 1.45, 32.10, 98.40, 2),
+(280.80, 165.90, 22.50, 10, 15.2, 2.10, 28.90, 110.20, 3),
+(180.40, 95.60, 12.30, 12, 18.3, 2.45, 19.20, 75.80, 4),
+(45.20, 28.40, 3.15, 15, 22.1, 3.20, 8.90, 25.30, 5);
+
+-- Consultas para verificação dos dados
+SELECT '=== USUÁRIOS ===' AS '';
+SELECT * FROM usuario;
+
+SELECT '=== EMPRESAS ===' AS '';
+SELECT * FROM empresa;
+
+SELECT '=== AÇÕES ===' AS '';
+SELECT a.*, e.ticker 
+FROM acoes a 
+JOIN empresa e ON a.fkEmpresa = e.idEmpresa;
+
+SELECT '=== AÇÕES FAVORITADAS ===' AS '';
+SELECT af.*, u.nome as usuario, e.ticker
+FROM acoesFavoritadas af
+JOIN usuario u ON af.fkUsuario = u.idUsuario
+JOIN acoes a ON af.fkAcoes = a.idAcoes
+JOIN empresa e ON a.fkEmpresa = e.idEmpresa;
+
+SELECT '=== NOTIFICAÇÕES ===' AS '';
+SELECT n.*, u.nome as usuario, e.ticker
+FROM notificacoes n
+JOIN usuario u ON n.fkUsuario = u.idUsuario
+JOIN acoes a ON n.fkAcoes = a.idAcoes
+JOIN empresa e ON a.fkEmpresa = e.idEmpresa;
+
+SELECT '=== LOGS ===' AS '';
+SELECT * FROM log;
+
+SELECT '=== INFORMAÇÕES TEMPORAIS ===' AS '';
+SELECT it.*, e.ticker
+FROM infoTemporal it
+JOIN empresa e ON it.fkEmpresa = e.idEmpresa;
+
+--        VIEW PARA PUXAR AS INFORMAÇÕES     --
+CREATE VIEW vw_dash_setores AS
+SELECT 
+    e.setor,
+    COUNT(DISTINCT e.idEmpresa) AS quantidade_acoes,
+    
+    -- KPIs e métricas principais
+    AVG(it.rentabilidadeAnual) AS retorno_medio,
+    AVG(((a.precoMaisAlto - a.precoMaisBaixo) / a.precoAbertura) * 100) AS volatilidade_media,
+    AVG(it.patrimonioLiquidoAcao) AS patrimonio_liquido_por_acao,
+    
+    -- Cálculo do DRE conforme especificado
+    AVG((it.valorMercado - it.partrimonioLiquido) / it.partrimonioLiquido) AS dre_medio,
+    
+    -- EBITDA calculado como valorMercado / múltiploSetorial
+    AVG(it.valorMercado / it.multiploSetorial) AS ebitda_medio,
+    
+    -- Liquidez (volume médio)
+    AVG(a.volume) AS liquidez_media,
+    
+    -- Estabilidade (inverso da volatilidade - quanto menor a volatilidade, maior a estabilidade)
+    (100 - AVG(((a.precoMaisAlto - a.precoMaisBaixo) / a.precoAbertura) * 100)) AS estabilidade_media,
+    
+    -- Identificação do melhor performer
+    CASE 
+        WHEN AVG(it.rentabilidadeAnual) = (
+            SELECT MAX(retorno_medio) FROM (
+                SELECT AVG(it2.rentabilidadeAnual) AS retorno_medio
+                FROM empresa e2
+                JOIN infoTemporal it2 ON e2.idEmpresa = it2.fkEmpresa
+                GROUP BY e2.setor
+            ) sub
+        ) THEN 1 ELSE 0 
+    END AS eh_melhor_performer,
+    
+    -- Identificação do maior volatilidade
+    CASE 
+        WHEN AVG(((a.precoMaisAlto - a.precoMaisBaixo) / a.precoAbertura) * 100) = (
+            SELECT MAX(volatilidade_media) FROM (
+                SELECT AVG(((a2.precoMaisAlto - a2.precoMaisBaixo) / a2.precoAbertura) * 100) AS volatilidade_media
+                FROM empresa e2
+                JOIN acoes a2 ON e2.idEmpresa = a2.fkEmpresa
+                GROUP BY e2.setor
+            ) sub
+        ) THEN 1 ELSE 0 
+    END AS eh_maior_volatilidade
+
+FROM empresa e
+JOIN acoes a ON e.idEmpresa = a.fkEmpresa
+JOIN infoTemporal it ON e.idEmpresa = it.fkEmpresa
+GROUP BY e.setor;
+
+-- SELECTS PARA VER O RESULTADO --
+
+-- 1. Dados completos para a lista de setores
+SELECT 
+    setor,
+    quantidade_acoes,
+    ROUND(retorno_medio, 2) AS retorno_percentual,
+    ROUND(dre_medio, 2) AS dre,
+    ROUND(ebitda_medio, 2) AS ebitda,
+    ROUND(volatilidade_media, 2) AS volatilidade,
+    CASE 
+        WHEN retorno_medio > 20 THEN 'Alta'
+        WHEN retorno_medio BETWEEN 0 AND 15 THEN 'Estável' 
+        ELSE 'Baixa'
+    END AS tendencia
+FROM vw_dash_setores
+ORDER BY retorno_medio DESC;
+
+-- 2. KPIs principais para o topo da página
+SELECT 
+    COUNT(DISTINCT setor) AS total_setores,
+    (SELECT setor FROM vw_dash_setores WHERE eh_melhor_performer = 1) AS melhor_performer,
+    (SELECT setor FROM vw_dash_setores WHERE eh_maior_volatilidade = 1) AS maior_volatilidade
+FROM vw_dash_setores;
+
+-- 3. Dados para o gráfico radar (Comparativo Multidimensional)
+SELECT 
+    setor,
+    ROUND(retorno_medio, 2) AS retorno,
+    ROUND(patrimonio_liquido_por_acao, 2) AS patrimonio_liquido_por_acao,
+    ROUND(liquidez_media, 2) AS liquidez,
+    ROUND(estabilidade_media, 2) AS estabilidade
+FROM vw_dash_setores
+WHERE setor IN ('Tecnologia', 'Saúde', 'Financeiro', 'Energia', 'Mineração')
+ORDER BY setor;
+
+-- 4. Dados para o gráfico de barras (Retorno vs Volatilidade vs Patrimônio Líquido por Ação)
+SELECT 
+    setor,
+    ROUND(retorno_medio, 2) AS retorno,
+    ROUND(volatilidade_media, 2) AS volatilidade,
+    ROUND(patrimonio_liquido_por_acao, 2) AS patrimonio_liquido_por_acao
+FROM vw_dash_setores
+ORDER BY retorno_medio DESC;
+
+-- 5. Dados detalhados para o popup de ações individuais
+SELECT 
+    e.nome AS nome_empresa,
+    e.ticker,
+    e.setor,
+    a.precoFechamento AS preco_atual,
+    a.precoAbertura,
+    a.precoMaisAlto,
+    a.precoMaisBaixo,
+    a.volume,
+    it.valorMercado AS market_cap,
+    it.multiploSetorial AS pe_ratio,
+    it.rentabilidadeAnual,
+    -- Cálculo da variação percentual do dia
+    ROUND(((a.precoFechamento - a.precoAbertura) / a.precoAbertura * 100), 2) AS variacao_percentual
+FROM empresa e
+JOIN acoes a ON e.idEmpresa = a.fkEmpresa
+JOIN infoTemporal it ON e.idEmpresa = it.fkEmpresa
+WHERE e.ticker = 'PETR4'
+ORDER BY a.dtAtual DESC
+LIMIT 1;
+
+--  -------------------------------------------------------------------------------------
+
+
+
+select melhor_performer from vw_dash_setores;
+drop view vw_dash_setores;
+
+select retorno_medio from vw_dash_setores;
+describe infoTemporal;
+
+select avg(rentabilidadeAnual) from infoTemporal i join empresa e on i.fkEmpresa = e.idEmpresa;
+
+DROP VIEW vw_dash_setores;
+show tables;
+select ebitda from vw_dash_setores;
