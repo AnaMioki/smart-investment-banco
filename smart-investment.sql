@@ -74,6 +74,7 @@ precoSobreValorPatrimonial DOUBLE,
 EBTDA DOUBLE,
 DRE DOUBLE,
 fkEmpresa INT,
+ano INT,
 CONSTRAINT fkEmpresainfo FOREIGN KEY(fkEmpresa) REFERENCES empresa (idEmpresa),
 CONSTRAINT primariesKeyInfoEmpresa PRIMARY KEY (idInfo, fkEmpresa)
 );
@@ -233,12 +234,13 @@ INSERT INTO log (tipo, dtLog, mensagemErro) VALUES
 ('Alerta', NOW(), 'Tentativa de acesso não autorizado detectada');
 
 -- Inserir informações temporais
-INSERT INTO infoTemporal (valorMercado, partrimonioLiquido, patrimonioLiquidoAcao, multiploSetorial, rentabilidadeAnual, precoSobreValorPatrimonial, EBTDA, DRE, fkEmpresa) VALUES
-(450.50, 280.30, 35.20, 8, 12.5, 1.98, 45.60, 120.30, 1),
-(320.25, 190.15, 28.10, 6, 8.7, 1.45, 32.10, 98.40, 2),
-(280.80, 165.90, 22.50, 10, 15.2, 2.10, 28.90, 110.20, 3),
-(180.40, 95.60, 12.30, 12, 18.3, 2.45, 19.20, 75.80, 4),
-(45.20, 28.40, 3.15, 15, 22.1, 3.20, 8.90, 25.30, 5);
+INSERT INTO infoTemporal (valorMercado, partrimonioLiquido, patrimonioLiquidoAcao, multiploSetorial, rentabilidadeAnual, precoSobreValorPatrimonial, EBTDA, DRE, fkEmpresa, ano) VALUES
+(450.50, 280.30, 35.20, 8, 12.5, 1.98, 45.60, 120.30, 1, 2025),
+(320.25, 190.15, 28.10, 6, 8.7, 1.45, 32.10, 98.40, 2, 2025),
+(280.80, 165.90, 22.50, 10, 15.2, 2.10, 28.90, 110.20, 3, 2025),
+(180.40, 95.60, 12.30, 12, 18.3, 2.45, 19.20, 75.80, 4, 2025),
+(450.50, 280.30, 35.20, 8, 9, 1.98, 45.60, 120.30, 1, 2024),
+(45.20, 28.40, 3.15, 15, 22.1, 3.20, 8.90, 25.30, 5, 2025);
 
 -- Consultas para verificação dos dados
 SELECT '=== USUÁRIOS ===' AS '';
@@ -393,7 +395,7 @@ WHERE e.ticker = 'PETR4'
 ORDER BY a.dtAtual DESC
 LIMIT 1;
 
---  -------------------------------------------------------------------------------------
+--  --------------------------------------- UMA FORMA QUE ACHEI MAIS FÁCIL DE FAZER, MAS TALVEZ O OUTRO SELECT SEJA MAIS COMPLETO ----------------------------------------------
 SELECT 
     fkEmpresa,
     AVG(rentabilidadeAnual) AS retorno_medio_3_anos
@@ -450,6 +452,6 @@ describe empresa;
 select avg(rentabilidadeAnual) from infoTemporal i join empresa e on i.fkEmpresa = e.idEmpresa;
 select dtAtual from acoes;
 describe acoes;
-DROP VIEW vw_dash_setores;
+-- DROP VIEW vw_dash_setores;
 show tables;
 select ebitda from vw_dash_setores;
