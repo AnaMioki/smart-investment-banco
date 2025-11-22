@@ -524,8 +524,7 @@ FROM infoTemporal it
 INNER JOIN empresa e ON it.fkEmpresa = e.idEmpresa
 INNER JOIN acoes a ON a.fkEmpresa = e.idEmpresa AND YEAR(a.dtAtual) = it.ano
 GROUP BY e.setor, it.ano;
--- Primeiro, vamos obter os anos mais recentes com base no limite
--- Vamos usar uma subconsulta para obter os últimos N anos e então agregar os dados por setor nesses anos.
+-- Vamos usar uma subconsulta para obter os últimos N (LIMIT X) anos e então agregar os dados por setor nesses anos.
 
 -- Exemplo para 1 ano (ano mais recente)
 SELECT 
@@ -742,3 +741,69 @@ FROM dashboard_graficos
 WHERE ano IN (2022, 2023, 2024)
 GROUP BY setor
 ORDER BY retorno DESC;
+
+
+
+-- 													TELA AÇÕES 
+
+CREATE OR REPLACE VIEW dashboard_acoes AS
+SELECT 
+    e.idEmpresa,
+    e.nome,
+    e.ticker,
+    e.setor,
+    it.rentabilidadeAnual,
+    it.precoSobreValorPatrimonial,
+    it.patrimonioLiquidoAcao,
+    ((a.precoMaisAlto - a.precoMaisBaixo) / a.precoAbertura) * 100 AS volatilidade,
+    it.ano
+FROM infoTemporal it
+INNER JOIN empresa e ON it.fkEmpresa = e.idEmpresa
+INNER JOIN acoes a ON a.fkEmpresa = e.idEmpresa AND YEAR(a.dtAtual) = it.ano
+WHERE it.ano = (SELECT MAX(ano) FROM infoTemporal);
+
+
+-- AÇÕES RECOMENDADAS:
+-- Para todos os setores
+SELECT COUNT(*) AS acoes_recomendadas
+FROM dashboard_acoes
+WHERE precoSobreValorPatrimonial <= 1 OR rentabilidadeAnual > 15;
+
+-- Para um setor específico
+SELECT COUNT(*) AS acoes_recomendadas
+FROM dashboard_acoes
+WHERE setor = 'Tecnologia' AND (precoSobreValorPatrimonial <= 1 OR rentabilidadeAnual > 15); -- AKI É SÓ MUDAR O SETOR E BOA
+
+
+-- RETORNO MÉDIO
+-- Todos os setores
+SELECT AVG(rentabilidadeAnual) AS retorno_medio
+FROM dashboard_acoes;
+
+-- Por setor
+SELECT AVG(rentabilidadeAnual) AS retorno_medio
+FROM dashboard_acoes
+WHERE setor = 'Tecnologia';
+
+
+-- VOLATILIDADE MÉDIA:
+-- Todos os setores
+SELECT AVG(volatilidade) AS volatilidade_media
+FROM dashboard_acoes;
+
+-- Por setor
+SELECT AVG(volatilidade) AS volatilidade_media
+FROM dashboard_acoes
+WHERE setor = 'Tecnologia';
+
+-- P/E MÉDIO:
+-- Todos os setores
+SELECT AVG(patrimonioLiquidoAcao) AS pe_medio
+FROM dashboard_acoes;
+
+-- Por setor
+SELECT AVG(patrimonioLiquidoAcao) AS pe_medio
+FROM dashboard_acoes
+WHERE setor = 'Tecnologia';
+
+
