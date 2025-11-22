@@ -806,4 +806,57 @@ SELECT AVG(patrimonioLiquidoAcao) AS pe_medio
 FROM dashboard_acoes
 WHERE setor = 'Tecnologia';
 
+-- 				AINDA NA TELA DE AÇÕES, MAS PPASSANDO PARA A PARTE DOS GRÁFICOS
+
+-- GRÁFICO EVOLUÇÃO COM O TEMPO
+CREATE VIEW evolucao_preco_2024 AS
+SELECT 
+    e.nome AS acao,
+    e.ticker,
+    MONTH(a.dtAtual) AS mes,
+    AVG(a.precoFechamento) AS preco_medio_mensal
+FROM acoes a
+INNER JOIN empresa e ON a.fkEmpresa = e.idEmpresa
+WHERE YEAR(a.dtAtual) = 2024
+GROUP BY e.idEmpresa, e.nome, e.ticker, MONTH(a.dtAtual)
+ORDER BY e.nome, mes;
+
+SELECT mes, preco_medio_mensal
+FROM evolucao_preco_2024
+WHERE ticker = 'AAPL'  -- ticker desejado, não sei se vai fazer com que o usuário escolha... se não talvez podemos pegar o que tenha a maior rentabilidade, ou algo assim.
+ORDER BY mes;
+
+-- VIEW PARA OS DADOS NAS KPI's
+CREATE OR REPLACE VIEW dados_acoes_atual AS
+SELECT 
+    e.nome AS acao,
+    e.ticker,
+    e.setor,
+    a.precoFechamento AS preco_atual,
+    it.rentabilidadeAnual AS retorno,
+    it.patrimonioLiquidoAcao AS patrimonioLiquidoAcao,
+    it.DRE AS DRE,
+    a.volume,
+    a.dtAtual AS data_atualizacao
+FROM empresa e
+INNER JOIN infoTemporal it ON e.idEmpresa = it.fkEmpresa
+INNER JOIN acoes a ON e.idEmpresa = a.fkEmpresa
+WHERE it.ano = 2024
+AND a.dtAtual = (SELECT MAX(dtAtual) FROM acoes WHERE fkEmpresa = e.idEmpresa AND YEAR(dtAtual) = 2024);
+
+SELECT 
+    acao,
+    setor,
+    preco_atual,
+    retorno,
+    patrimonioLiquidoAcao,
+    DRE,
+    volume
+FROM dados_acoes_atual
+WHERE ticker = 'HEAL5';
+
+SELECT * FROM empresa;
+
+
+select * from empresa;
 
