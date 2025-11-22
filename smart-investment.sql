@@ -71,7 +71,7 @@ multiploSetorial INT,
 rentabilidadeAnual DOUBLE,
 infoTemporalcol DOUBLE,
 precoSobreValorPatrimonial DOUBLE,
-EBTDA DOUBLE,
+EBITDA DOUBLE,
 DRE DOUBLE,
 fkEmpresa INT NOT NULL,
 ano INT,
@@ -450,3 +450,209 @@ describe acoes;
 -- DROP VIEW vw_dash_setores;
 show tables;
 select ebitda from vw_dash_setores; */
+
+
+CREATE OR REPLACE VIEW dashboard_setorial_detalhado AS
+SELECT 
+    e.setor,
+    it.ano,
+    it.rentabilidadeAnual AS retorno,
+    it.DRE AS DRE, -- onde está sharpe
+    ((a.precoMaisAlto - a.precoMaisBaixo) / a.precoAbertura) * 100 AS volatilidade,
+    it.EBITDA AS EBITDA, -- onde está max_drawdown,
+    e.idEmpresa
+FROM infoTemporal it
+INNER JOIN empresa e ON it.fkEmpresa = e.idEmpresa
+INNER JOIN acoes a ON a.fkEmpresa = e.idEmpresa AND YEAR(a.dtAtual) = it.ano;
+
+select * from infoTemporal;
+
+			-- TELA DE DASHBOARD
+-- MÉDIA PARA ANO ATUAL
+SELECT 
+    setor,
+    AVG(retorno) AS retorno_medio,
+    AVG(DRE) AS DRE_medio,
+    AVG(volatilidade) AS volatilidade_media,
+    AVG(EBITDA) AS EBITDA_medio,
+    COUNT(DISTINCT idEmpresa) AS num_acoes
+FROM dashboard_setorial_detalhado
+WHERE setor = 'Mineração' 
+AND ano >= (SELECT MAX(ano) FROM infoTemporal);
+
+-- MÉDIA PARA 1 ANO
+SELECT 
+    setor,
+    AVG(retorno) AS retorno_medio,
+    AVG(DRE) AS DRE_medio,
+    AVG(volatilidade) AS volatilidade_media,
+    AVG(EBITDA) AS EBITDA_medio,
+    COUNT(DISTINCT idEmpresa) AS num_acoes
+FROM dashboard_setorial_detalhado
+WHERE setor = 'Mineração' 
+AND ano >= (SELECT MAX(ano) -1 FROM infoTemporal);
+
+-- média para 2 anos
+SELECT 
+    setor,
+    AVG(retorno) AS retorno_medio,
+    AVG(DRE) AS DRE_medio,
+    AVG(volatilidade) AS volatilidade_media,
+    AVG(EBITDA) AS EBITDA_medio,
+    COUNT(DISTINCT idEmpresa) AS num_acoes
+FROM dashboard_setorial_detalhado
+WHERE setor = 'Mineração' 
+AND ano >= (SELECT MAX(ano) -1 FROM infoTemporal);
+
+
+
+					-- TELA SETORES 
+
+CREATE OR REPLACE VIEW dashboard_kpi_setorial AS
+SELECT 
+    e.setor,
+    it.ano,
+    -- Métricas para Melhor Performer: rentabilidadeAnual, precoSobreValorPatrimonial, valorMercado
+    AVG(it.rentabilidadeAnual) AS retorno_medio,
+    AVG(it.precoSobreValorPatrimonial) AS preco_sobre_vp_medio,
+    AVG(it.valorMercado) AS valor_mercado_medio,
+    -- Métrica para Volatilidade
+    AVG(((a.precoMaisAlto - a.precoMaisBaixo) / a.precoAbertura) * 100) AS volatilidade_media,
+    -- Contagem de empresas por setor e ano
+    COUNT(DISTINCT e.idEmpresa) AS num_empresas
+FROM infoTemporal it
+INNER JOIN empresa e ON it.fkEmpresa = e.idEmpresa
+INNER JOIN acoes a ON a.fkEmpresa = e.idEmpresa AND YEAR(a.dtAtual) = it.ano
+GROUP BY e.setor, it.ano;
+-- Primeiro, vamos obter os anos mais recentes com base no limite
+-- Vamos usar uma subconsulta para obter os últimos N anos e então agregar os dados por setor nesses anos.
+
+-- Exemplo para 1 ano (ano mais recente)
+SELECT 
+    COUNT(DISTINCT setor) AS total_setores,
+    (SELECT setor 
+     FROM (
+        SELECT setor, AVG(retorno_medio) AS retorno_medio
+        FROM dashboard_kpi_setorial
+        WHERE ano IN (SELECT MAX(ano) FROM dashboard_kpi_setorial)
+        GROUP BY setor
+        HAVING AVG(retorno_medio) >= 10 
+           AND AVG(preco_sobre_vp_medio) <= 1 
+           AND AVG(valor_mercado_medio) > 500000000
+        ORDER BY retorno_medio DESC
+        LIMIT 1
+     ) AS performer
+    ) AS melhor_performer,
+    (SELECT setor 
+     FROM (
+        SELECT setor, AVG(volatilidade_media) AS volatilidade_media
+        FROM dashboard_kpi_setorial
+        WHERE ano IN (SELECT MAX(ano) FROM dashboard_kpi_setorial)
+        GROUP BY setor
+        ORDER BY volatilidade_media DESC
+        LIMIT 1
+     ) AS volatilidade
+    ) AS maior_volatilidade
+FROM dashboard_kpi_setorial
+WHERE ano IN (SELECT MAX(ano) FROM dashboard_kpi_setorial);
+
+--   EXEMPLO PARA 2 ANOS;
+SELECT 
+    COUNT(DISTINCT setor) AS total_setores,
+    (SELECT setor 
+     FROM (
+        SELECT setor, AVG(retorno_medio) AS retorno_medio
+        FROM dashboard_kpi_setorial
+        WHERE ano IN (
+            SELECT ano FROM (
+                SELECT DISTINCT ano 
+                FROM dashboard_kpi_setorial 
+                ORDER BY ano DESC 
+                LIMIT 2
+            ) AS anos
+        )
+        GROUP BY setor
+        HAVING AVG(retorno_medio) >= 10 
+           AND AVG(preco_sobre_vp_medio) <= 1 
+           AND AVG(valor_mercado_medio) > 500000000
+        ORDER BY retorno_medio DESC
+        LIMIT 1
+     ) AS performer
+    ) AS melhor_performer,
+    (SELECT setor 
+     FROM (
+        SELECT setor, AVG(volatilidade_media) AS volatilidade_media
+        FROM dashboard_kpi_setorial
+        WHERE ano IN (
+            SELECT ano FROM (
+                SELECT DISTINCT ano 
+                FROM dashboard_kpi_setorial 
+                ORDER BY ano DESC 
+                LIMIT 2
+            ) AS anos
+        )
+        GROUP BY setor
+        ORDER BY volatilidade_media DESC
+        LIMIT 1
+     ) AS volatilidade
+    ) AS maior_volatilidade
+FROM dashboard_kpi_setorial
+WHERE ano IN (
+    SELECT ano FROM (
+        SELECT DISTINCT ano 
+        FROM dashboard_kpi_setorial 
+        ORDER BY ano DESC 
+        LIMIT 2
+    ) AS anos
+);
+
+
+--   EXEMPLO PARA 3 ANOS;
+SELECT 
+    COUNT(DISTINCT setor) AS total_setores,
+    (SELECT setor 
+     FROM (
+        SELECT setor, AVG(retorno_medio) AS retorno_medio
+        FROM dashboard_kpi_setorial
+        WHERE ano IN (
+            SELECT ano FROM (
+                SELECT DISTINCT ano 
+                FROM dashboard_kpi_setorial 
+                ORDER BY ano DESC 
+                LIMIT 3
+            ) AS anos
+        )
+        GROUP BY setor
+        HAVING AVG(retorno_medio) >= 10 
+           AND AVG(preco_sobre_vp_medio) <= 1 
+           AND AVG(valor_mercado_medio) > 500000000
+        ORDER BY retorno_medio DESC
+        LIMIT 1
+     ) AS performer
+    ) AS melhor_performer,
+    (SELECT setor 
+     FROM (
+        SELECT setor, AVG(volatilidade_media) AS volatilidade_media
+        FROM dashboard_kpi_setorial
+        WHERE ano IN (
+            SELECT ano FROM (
+                SELECT DISTINCT ano 
+                FROM dashboard_kpi_setorial 
+                ORDER BY ano DESC 
+                LIMIT 3
+            ) AS anos
+        )
+        GROUP BY setor
+        ORDER BY volatilidade_media DESC
+        LIMIT 1
+     ) AS volatilidade
+    ) AS maior_volatilidade
+FROM dashboard_kpi_setorial
+WHERE ano IN (
+    SELECT ano FROM (
+        SELECT DISTINCT ano 
+        FROM dashboard_kpi_setorial 
+        ORDER BY ano DESC 
+        LIMIT 3
+    ) AS anos
+);
