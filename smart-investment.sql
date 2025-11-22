@@ -65,7 +65,7 @@ mensagemErro TEXT
 CREATE TABLE infoTemporal (
 idInfo INT AUTO_INCREMENT,
 valorMercado DOUBLE,
-partrimonioLiquido DOUBLE,
+patrimonioLiquido DOUBLE,
 patrimonioLiquidoAcao DOUBLE,
 multiploSetorial INT,
 rentabilidadeAnual DOUBLE,
@@ -234,7 +234,7 @@ INSERT INTO log (tipo, dtLog, mensagemErro) VALUES
 ('Alerta', NOW(), 'Tentativa de acesso não autorizado detectada');
 
 -- Inserir informações temporais
-INSERT INTO infoTemporal (valorMercado, partrimonioLiquido, patrimonioLiquidoAcao, multiploSetorial, rentabilidadeAnual, precoSobreValorPatrimonial, EBTDA, DRE, fkEmpresa, ano) VALUES
+INSERT INTO infoTemporal (valorMercado, patrimonioLiquido, patrimonioLiquidoAcao, multiploSetorial, rentabilidadeAnual, precoSobreValorPatrimonial, EBTDA, DRE, fkEmpresa, ano) VALUES
 (450.50, 280.30, 35.20, 8, 12.5, 1.98, 45.60, 120.30, 1, 2025),
 (320.25, 190.15, 28.10, 6, 8.7, 1.45, 32.10, 98.40, 2, 2025),
 (280.80, 165.90, 22.50, 10, 15.2, 2.10, 28.90, 110.20, 3, 2025),
