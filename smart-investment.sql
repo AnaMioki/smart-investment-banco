@@ -656,3 +656,89 @@ WHERE ano IN (
         LIMIT 3
     ) AS anos
 );
+
+
+--  									AINDA TELA DE SETORES, MAS AGORA VAI SER UMA VIEW PARA OS GRÁFICOS:
+
+CREATE OR REPLACE VIEW dashboard_graficos AS
+SELECT 
+    e.setor,
+    it.ano,    -- "Sharpe -> patrimonioLiquidoAcao"; " Liquidez ->precoSobreValorPatrimonial"
+    AVG(it.rentabilidadeAnual) AS retorno_medio,
+    AVG(it.patrimonioLiquidoAcao) AS patrimonioLiquidoAcao_medio, -- lugar do sharpe
+    AVG(((a.precoMaisAlto - a.precoMaisBaixo) / a.precoAbertura) * 100) AS volatilidade_media,
+    AVG(100 - ((a.precoMaisAlto - a.precoMaisBaixo) / a.precoAbertura) * 100) AS estabilidade_media,
+    AVG(it.precoSobreValorPatrimonial) AS precoSobreValorPatrimonial_media, -- lugar do Liquidez
+    COUNT(DISTINCT e.idEmpresa) AS num_acoes
+FROM infoTemporal it
+INNER JOIN empresa e ON it.fkEmpresa = e.idEmpresa
+INNER JOIN acoes a ON a.fkEmpresa = e.idEmpresa AND YEAR(a.dtAtual) = it.ano
+GROUP BY e.setor, it.ano;
+
+
+-- GRÁFICO Multidimensional - Radar
+-- Para 1 ano
+SELECT 
+    setor,
+    AVG(retorno_medio) AS retorno,
+    AVG(estabilidade_media) AS estabilidade,
+    AVG(precoSobreValorPatrimonial_media) AS precoSobreValorPatrimonial,
+    AVG(patrimonioLiquidoAcao_medio) AS patrimonioLiquidoAcao
+FROM dashboard_graficos
+WHERE ano = 2024
+GROUP BY setor LIMIT 3;
+
+-- Para 2 anos
+SELECT 
+    setor,
+    AVG(retorno_medio) AS retorno,
+    AVG(estabilidade_media) AS estabilidade,
+    AVG(precoSobreValorPatrimonial_media) AS precoSobreValorPatrimonial,
+    AVG(patrimonioLiquidoAcao_medio) AS sharpe
+FROM dashboard_graficos
+WHERE ano IN (2023, 2024)
+GROUP BY setor LIMIT 3;
+
+-- Para 3 anos
+SELECT 
+    setor,
+    AVG(retorno_medio) AS retorno,
+    AVG(estabilidade_media) AS estabilidade,
+    AVG(precoSobreValorPatrimonial_media) AS precoSobreValorPatrimonial,
+    AVG(patrimonioLiquidoAcao_medio) AS patrimonioLiquidoAcao
+FROM dashboard_graficos
+WHERE ano IN (2022, 2023, 2024)
+GROUP BY setor LIMIT 3;
+
+
+-- GRÁFICO DE BARRAS (RETORNO E VOLATIBILIDADE)
+
+-- Para 1 ano
+SELECT 
+    setor,
+    AVG(retorno_medio) AS retorno,
+    AVG(volatilidade_media) AS volatilidade
+FROM dashboard_graficos
+WHERE ano = 2024
+GROUP BY setor
+ORDER BY retorno DESC;
+
+-- Para 2 anos
+SELECT 
+    setor,
+    AVG(retorno_medio) AS retorno,
+    AVG(volatilidade_media) AS volatilidade
+FROM dashboard_graficos
+WHERE ano IN (2023, 2024)
+GROUP BY setor
+ORDER BY retorno DESC;
+
+-- Para 3 anos
+SELECT 
+    setor,
+    AVG(retorno_medio) AS retorno,
+    AVG(volatilidade_media) AS volatilidade
+FROM dashboard_graficos
+WHERE ano IN (2022, 2023, 2024)
+GROUP BY setor
+ORDER BY retorno DESC;
