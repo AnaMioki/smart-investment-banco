@@ -855,8 +855,79 @@ SELECT
 FROM dados_acoes_atual
 WHERE ticker = 'HEAL5';
 
-SELECT * FROM empresa;
-
+-- 						AGORA PARA TELA DE COMPARAÇÃO:
+CREATE OR REPLACE VIEW comparacao_acoes AS
+SELECT 
+    e.ticker,
+    e.nome AS acao,
+    e.setor,
+    it.rentabilidadeAnual AS retorno,
+    ((a.precoMaisAlto - a.precoMaisBaixo) / a.precoAbertura) * 100 AS volatilidade,
+    it.pratrimonioLiquido AS patrimonioLiquido, -- era Max_drawndown
+    it.patrimonioLiquidoAcao AS patrimonioLiquidoAcao, -- era Sharpe
+    it.precoSobreValorPatrimonial AS liquidez,
+    it.DRE AS DRE,
+    it.EBITDA AS EBITDA,
+    it.patrimonioLiquidoAcao AS pe_ratio,
+    a.precoFechamento,
+    a.dtAtual
+FROM empresa e
+INNER JOIN infoTemporal it ON e.idEmpresa = it.fkEmpresa
+INNER JOIN acoes a ON e.idEmpresa = a.fkEmpresa
+WHERE it.ano = 2024;
 
 select * from empresa;
+-- KPIs para ações específicas
+SELECT 
+    ticker,
+    acao,
+    setor,
+    retorno,
+    volatilidade,
+    patrimonioLiquido
+FROM comparacao_acoes
+WHERE ticker IN ('HEAL5', 'ENG4', 'INDI6')
+AND dtAtual = (SELECT MAX(dtAtual) FROM comparacao_acoes WHERE ticker IN ('HEAL5', 'ENG4', 'INDI6'));
+
+
+-- Gráfico Multidimensional (Radar):
+SELECT 
+    ticker,
+    retorno,
+    (100 - volatilidade) AS estabilidade,
+    patrimonioLiquidoAcao,
+    liquidez
+FROM comparacao_acoes
+WHERE ticker IN ('HEAL5', 'ENG4', 'INDI6')
+AND dtAtual = (SELECT MAX(dtAtual) FROM comparacao_acoes WHERE ticker IN ('HEAL5', 'ENG4', 'INDI6'));
+
+-- GRÁFICO RETORNO P/E:
+SELECT 
+    ticker,
+    retorno,
+    pe_ratio
+FROM comparacao_acoes
+WHERE ticker IN ('AAPL', 'GOOGL', 'MSFT', 'JNJ')
+AND dtAtual = (SELECT MAX(dtAtual) FROM comparacao_acoes WHERE ticker IN ('AAPL', 'GOOGL', 'MSFT', 'JNJ'));
+
+-- GRÁFICO SHARPE E BETA: -- que vai virar DRE E EBITIDA
+SELECT 
+    ticker,
+    EBITDA,
+    DRE
+FROM comparacao_acoes
+WHERE ticker IN ('HEAL5', 'ENG4', 'INDI6')
+AND dtAtual = (SELECT MAX(dtAtual) FROM comparacao_acoes WHERE ticker IN ('HEAL5', 'ENG4', 'INDI6'));
+
+
+-- GRÁFICO EVOLUÇÃO DE PREÇOS MENSAL:
+SELECT 
+    ticker,
+    MONTH(dtAtual) AS mes,
+    AVG(precoFechamento) AS preco_medio_mensal
+FROM comparacao_acoes
+WHERE ticker IN ('HEAL5', 'ENG4', 'INDI6')
+AND YEAR(dtAtual) = 2024
+GROUP BY ticker, MONTH(dtAtual)
+ORDER BY ticker, mes;
 
