@@ -11,7 +11,7 @@ senha VARCHAR(255) NOT NULL,
 perfil VARCHAR(20),
 	CONSTRAINT chkPerfil 
 		CHECK (perfil IN ('Conservador', 'Moderado', 'Arrojado'))
-);
+); 
 
 CREATE TABLE empresa (
 idEmpresa INT PRIMARY KEY AUTO_INCREMENT,
@@ -505,7 +505,6 @@ WHERE setor = 'Mineração'
 AND ano >= (SELECT MAX(ano) -1 FROM infoTemporal);
 
 
-
 					-- TELA SETORES 
 
 CREATE OR REPLACE VIEW dashboard_kpi_setorial AS
@@ -931,3 +930,32 @@ AND YEAR(dtAtual) = 2024
 GROUP BY ticker, MONTH(dtAtual)
 ORDER BY ticker, mes;
 
+ -- -------- PARA TER UMA NOÇÃO MELHOR, ESSA É A VIEW QUE SERVE PARA DIFERENCIAR OS PERFIS DE USUÁRIO, USAREI ELA COMO BASE PARA MODIFICAR AS OUTRAS VIEWS; ESTOU FAZENDO TESTES AINDA.
+ 
+ CREATE OR REPLACE VIEW acoes_com_perfil AS
+SELECT 
+    e.ticker,
+    e.nome,
+    e.setor,
+    it.rentabilidadeAnual,
+    it.DRE,
+    ((a.precoMaisAlto - a.precoMaisBaixo) / a.precoAbertura) * 100 AS volatilidade,
+    it.EBITDA,
+    it.precoSobreValorPatrimonial,
+    it.patrimonioLiquidoAcao,
+    -- CLASSIFICAÇÕES POR PERFIL
+    CASE 
+        WHEN ((a.precoMaisAlto - a.precoMaisBaixo) / a.precoAbertura) * 100 < 15 
+             AND it.precoSobreValorPatrimonial <= 1 THEN 'CONSERVADOR'
+        WHEN ((a.precoMaisAlto - a.precoMaisBaixo) / a.precoAbertura) * 100 BETWEEN 15 AND 25 
+             AND it.rentabilidadeAnual BETWEEN 8 AND 20 THEN 'MODERADO'
+        WHEN it.rentabilidadeAnual > 15 
+             AND ((a.precoMaisAlto - a.precoMaisBaixo) / a.precoAbertura) * 100 > 25 THEN 'ARROJADO'
+        ELSE 'NEUTRO'
+    END AS perfil_recomendado
+FROM empresa e
+INNER JOIN infoTemporal it ON e.idEmpresa = it.fkEmpresa
+INNER JOIN acoes a ON a.fkEmpresa = e.idEmpresa AND YEAR(a.dtAtual) = it.ano
+WHERE it.ano = (SELECT MAX(ano) FROM infoTemporal);
+select nome, ticker, perfil_recomendado from acoes_com_perfil;
+select nome, ticker, perfil_recomendado from acoes_com_perfil where perfil_recomendado = 'MODERADO';
