@@ -47,8 +47,6 @@ tipo VARCHAR(30),
 CONSTRAINT chkTipoNotificacoes
 		CHECK (tipo IN ('Ação sugerida', 'Ação Favoritada', 'Alerta')),
 mensagem VARCHAR(255),
-dtNotificacao DATETIME DEFAULT CURRENT_TIMESTAMP(),
-lido TINYINT DEFAULT 0,
 fkAcoes INT NOT NULL,
 CONSTRAINT fkAcoesNotificacoes FOREIGN KEY (fkAcoes) REFERENCES acoes(idAcoes),
 fkUsuario INT NOT NULL,
@@ -469,7 +467,58 @@ INNER JOIN acoes a ON a.fkEmpresa = e.idEmpresa AND YEAR(a.dtAtual) = it.ano;
 
 select * from infoTemporal;
 
-			-- TELA DE DASHBOARD
+			-- TELA DE DASHBOARD   find
+
+CREATE OR REPLACE VIEW dashboard_setorial_base AS
+SELECT 
+    e.setor,
+    it.ano as ano_referencia,
+    
+    -- Quantidade de empresas naquele ano
+    COUNT(DISTINCT e.idEmpresa) as qtd_empresas,
+    
+    -- Agora sim: Soma PURA (sem multiplicar pelos dias de cotação)
+    SUM(it.rentabilidadeAnual) as soma_retorno,
+    SUM(it.DRE) as soma_dre,
+    SUM(it.EBITDA) as soma_ebitda,
+    
+    -- Soma da Volatilidade (que já vem compactada da subquery abaixo)
+    SUM(sub_acoes.volatilidade_media_ano) as soma_volatilidade
+
+FROM empresa e
+-- 1. Pega dados financeiros (1 linha por ano)
+INNER JOIN infoTemporal it ON e.idEmpresa = it.fkEmpresa
+
+-- 2. Pega dados de ações COMPACTADOS (Transforma N dias em 1 linha de média anual)
+INNER JOIN (
+    SELECT 
+        fkEmpresa,
+        YEAR(dtAtual) as ano,
+        -- Calcula a média de volatilidade DO ANO para aquela empresa
+        AVG( (precoMaisAlto - precoMaisBaixo) / precoAbertura * 100 ) as volatilidade_media_ano
+    FROM acoes
+    GROUP BY fkEmpresa, YEAR(dtAtual)
+) sub_acoes ON e.idEmpresa = sub_acoes.fkEmpresa AND it.ano = sub_acoes.ano
+
+GROUP BY e.setor, it.ano;
+select * from infoTemporal i join empresa e on i.fkEmpresa = e.idEmpresa;
+select * from acoes a join empresa e on a.fkEmpresa = e.idEmpresa join infoTemporal i on e.idEmpresa = i.fkEmpresa;
+
+insert into usuario (idUsuario, nome, dtNascimento, email, senha, perfil) values
+	(default, 'Victor', '2002-09-03', 'teste@123', '46070d4bf934fb0d4b06d9e2c46e346944e322444900a435d7d9a95e6d7435f5', 'arrojado');
+
+SELECT 
+    setor,
+    -- A mágica da média ponderada correta:
+    SUM(soma_retorno) / SUM(qtd_empresas) as rentabilidade_periodo,
+    SUM(soma_volatilidade) / SUM(qtd_empresas) as volatilidade_periodo,
+    SUM(soma_dre)/ SUM(qtd_empresas) as DRE,
+    SUM(soma_dre)/ SUM(qtd_empresas)as EBITDA
+FROM dashboard_setorial_base
+WHERE ano_referencia IN (2022, 2023, 2024)
+GROUP BY setor;	
+
+/* COMO ESTAVA ANTES A TELA DASHBOARD
 -- MÉDIA PARA ANO ATUAL
 SELECT 
     setor,
@@ -504,7 +553,7 @@ SELECT
     COUNT(DISTINCT idEmpresa) AS num_acoes
 FROM dashboard_setorial_detalhado
 WHERE setor = 'Mineração' 
-AND ano >= (SELECT MAX(ano) -1 FROM infoTemporal);
+AND ano >= (SELECT MAX(ano) -1 FROM infoTemporal);*/
 
 
 					-- TELA SETORES 
@@ -556,6 +605,9 @@ SELECT
 FROM dashboard_kpi_setorial
 WHERE ano IN (SELECT MAX(ano) FROM dashboard_kpi_setorial);
 
+describe infoTemporal;
+
+describe empresa;
 --   EXEMPLO PARA 2 ANOS;
 SELECT 
     COUNT(DISTINCT setor) AS total_setores,
@@ -864,7 +916,7 @@ SELECT
     e.setor,
     it.rentabilidadeAnual AS retorno,
     ((a.precoMaisAlto - a.precoMaisBaixo) / a.precoAbertura) * 100 AS volatilidade,
-    it.pratrimonioLiquido AS patrimonioLiquido, -- era Max_drawndown
+    it.patrimonioLiquido AS patrimonioLiquido, -- era Max_drawndown
     it.patrimonioLiquidoAcao AS patrimonioLiquidoAcao, -- era Sharpe
     it.precoSobreValorPatrimonial AS liquidez,
     it.DRE AS DRE,
@@ -934,7 +986,7 @@ ORDER BY ticker, mes;
 
  -- -------- PARA TER UMA NOÇÃO MELHOR, ESSA É A VIEW QUE SERVE PARA DIFERENCIAR OS PERFIS DE USUÁRIO, USAREI ELA COMO BASE PARA MODIFICAR AS OUTRAS VIEWS; ESTOU FAZENDO TESTES AINDA.
  
- CREATE OR REPLACE VIEW acoes_com_perfil AS
+CREATE OR REPLACE VIEW acoes_com_perfil AS
 SELECT 
     e.ticker,
     e.nome,
@@ -961,3 +1013,86 @@ INNER JOIN acoes a ON a.fkEmpresa = e.idEmpresa AND YEAR(a.dtAtual) = it.ano
 WHERE it.ano = (SELECT MAX(ano) FROM infoTemporal);
 select nome, ticker, perfil_recomendado from acoes_com_perfil;
 select nome, ticker, perfil_recomendado from acoes_com_perfil where perfil_recomendado = 'MODERADO';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+													-- TESTE ----------------
+                                                    
+CREATE OR REPLACE VIEW dashboard_setorial_teste AS
+SELECT 
+    e.setor,
+    YEAR(a.dtAtual) as ano,
+    COUNT(DISTINCT e.idEmpresa) as quantidade_empresas,
+    AVG(it.rentabilidadeAnual) AS retorno,
+    AVG(it.DRE) AS dre,
+    AVG(it.EBITDA) AS ebitda,
+    AVG(((a.precoMaisAlto - a.precoMaisBaixo) / a.precoAbertura) * 100) AS volatilidade,
+    CASE 
+        WHEN AVG(it.rentabilidadeAnual) > 10 THEN 'Alta'
+        WHEN AVG(it.rentabilidadeAnual) > 5 THEN 'Média'
+        ELSE 'Baixa'
+    END AS classificacao
+FROM empresa e
+INNER JOIN acoes a ON e.idEmpresa = a.fkEmpresa
+INNER JOIN infoTemporal it ON e.idEmpresa = it.fkEmpresa
+GROUP BY e.setor, YEAR(a.dtAtual);
+
+
+select * from infoTemporal;
+
+
+
+
+select distinct setor from empresa e join infoTemporal i on e.idEmpresa = i.fkEmpresa where ano = 2024;
+select retorno from dashboard_setorial_base where ano_referencia = 2022;
+
+
+SELECT 
+            setor,
+            -- A mágica da média ponderada correta:
+            TRUNCATE(SUM(soma_retorno) / SUM(qtd_empresas), 2) as rentabilidade_periodo,
+            TRUNCATE(SUM(soma_volatilidade) / SUM(qtd_empresas), 2) as volatilidade_periodo,
+            TRUNCATE(SUM(soma_dre) / SUM(qtd_empresas), 2) as DRE,
+            TRUNCATE(SUM(soma_ebitda) / SUM(qtd_empresas), 2) as EBITDA
+        FROM dashboard_setorial_base
+        WHERE ano_referencia IN (2022)
+        GROUP BY setor
+        ORDER BY rentabilidade_periodo DESC;
+
+
+select setor, rentabilidade_periodo from dashboard_setorial_base where ano_referencia = 2022;
+
+
+use smart_investment;
+
+
