@@ -45,6 +45,8 @@ CONSTRAINT primaryKeys PRIMARY KEY (idAcoesFavoritadas, fkAcoes, fkUsuario)
 CREATE TABLE notificacoes (
 idNotificacoes INT PRIMARY KEY AUTO_INCREMENT,
 tipo VARCHAR(30),
+dtNotificacao DATETIME DEFAULT CURRENT_TIMESTAMP(),
+lido TINYINT DEFAULT 0,
 CONSTRAINT chkTipoNotificacoes
 		CHECK (tipo IN ('Ação sugerida', 'Ação Favoritada', 'Alerta')),
 mensagem VARCHAR(255),
