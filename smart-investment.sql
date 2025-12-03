@@ -34,11 +34,12 @@ CONSTRAINT fkAcoesEmpresa FOREIGN KEY (fkEmpresa) REFERENCES empresa(idEmpresa)
 );
 
 CREATE TABLE acoesFavoritadas (
-idAcoesFavoritadas INT PRIMARY KEY AUTO_INCREMENT,
+idAcoesFavoritadas INT AUTO_INCREMENT,
 fkAcoes INT NOT NULL,
-CONSTRAINT fkAcoesFavoritadas FOREIGN KEY (fkAcoes) REFERENCES acoes(idAcoes),
+CONSTRAINT fkAcoesFavoritadas FOREIGN KEY (fkAcoes) REFERENCES empresa(idEmpresa),
 fkUsuario INT NOT NULL,
-CONSTRAINT fkUsuarioAcoesFavoritadas FOREIGN KEY (fkUsuario) REFERENCES usuario(idUsuario)
+CONSTRAINT fkUsuarioAcoesFavoritadas FOREIGN KEY (fkUsuario) REFERENCES usuario(idUsuario),
+CONSTRAINT primaryKeys PRIMARY KEY (idAcoesFavoritadas, fkAcoes, fkUsuario)
 );
 
 CREATE TABLE notificacoes (
@@ -48,7 +49,7 @@ CONSTRAINT chkTipoNotificacoes
 		CHECK (tipo IN ('Ação sugerida', 'Ação Favoritada', 'Alerta')),
 mensagem VARCHAR(255),
 fkAcoes INT NOT NULL,
-CONSTRAINT fkAcoesNotificacoes FOREIGN KEY (fkAcoes) REFERENCES acoes(idAcoes),
+CONSTRAINT fkAcoesNotificacoes FOREIGN KEY (fkAcoes) REFERENCES empresa(idEmpresa),
 fkUsuario INT NOT NULL,
 CONSTRAINT fkUsuarioNotificacoes FOREIGN KEY (fkUsuario) REFERENCES usuario(idUsuario)
 );
