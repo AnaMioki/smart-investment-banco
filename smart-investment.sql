@@ -10,7 +10,7 @@ email VARCHAR(60) NOT NULL UNIQUE,
 senha VARCHAR(255) NOT NULL,
 perfil VARCHAR(20),
 	CONSTRAINT chkPerfil 
-		CHECK (perfil IN ('Conservador', 'Moderado', 'Arrojado'))
+		CHECK (perfil IN ('Conservador', 'Moderado', 'Arrojado', 'Administrador'))
 ); 
 
 CREATE TABLE empresa (
