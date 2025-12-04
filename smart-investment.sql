@@ -987,6 +987,77 @@ AND YEAR(dtAtual) = 2024
 GROUP BY ticker, MONTH(dtAtual)
 ORDER BY ticker, mes;
 
+
+-- VIEW PARA TELA SETORES E QUAISQUER MAIS QUE PRECISAR, JUNTO DO PERFIL DO USUÁRIO --
+
+CREATE OR REPLACE VIEW dashboard_consolidado_usuario AS
+SELECT 
+    e.setor,
+    it.ano as ano_referencia,
+    
+    -- === AQUI ESTÁ A FUSÃO DA LÓGICA DE PERFIL ===
+    CASE 
+        -- Regra Conservador: Volatilidade baixa (<15%) e P/VP justo (<=1)
+        WHEN sub_acoes.volatilidade_media_ano < 15 AND it.precoSobreValorPatrimonial <= 1 THEN 'Conservador'
+        
+        -- Regra Moderado: Volatilidade média (15-25%) e Rentabilidade consistente (8-20%)
+        WHEN sub_acoes.volatilidade_media_ano BETWEEN 15 AND 25 AND it.rentabilidadeAnual BETWEEN 8 AND 20 THEN 'Moderado'
+        
+        -- Regra Arrojado: Alta rentabilidade (>15%) e aceita alta volatilidade (>25%)
+        WHEN it.rentabilidadeAnual > 15 AND sub_acoes.volatilidade_media_ano > 25 THEN 'Arrojado'
+        
+        -- Se não cair em nenhuma regra, é Neutro
+        ELSE 'Neutro'
+    END AS perfil_investidor,
+
+    -- Conta quantas empresas se encaixam neste perfil neste setor (Isso resolve a questão do "4 ações disponíveis")
+    COUNT(DISTINCT e.idEmpresa) as qtd_empresas,
+    
+    -- Somas para calcular as médias ponderadas depois
+    SUM(it.rentabilidadeAnual) as soma_retorno,
+    SUM(it.DRE) as soma_dre,
+    SUM(it.EBITDA) as soma_ebitda,
+    SUM(sub_acoes.volatilidade_media_ano) as soma_volatilidade
+
+FROM empresa e
+INNER JOIN infoTemporal it ON e.idEmpresa = it.fkEmpresa
+
+-- Subquery para garantir que a volatilidade seja anualizada corretamente antes de classificar
+INNER JOIN (
+    SELECT 
+        fkEmpresa,
+        YEAR(dtAtual) as ano,
+        AVG( (precoMaisAlto - precoMaisBaixo) / precoAbertura * 100 ) as volatilidade_media_ano
+    FROM acoes
+    GROUP BY fkEmpresa, YEAR(dtAtual)
+) sub_acoes ON e.idEmpresa = sub_acoes.fkEmpresa AND it.ano = sub_acoes.ano
+
+-- Agrupa por Setor, Ano e PERFIL. 
+-- Assim, o banco já deixa separado o que é "Tecnologia de Conservador" vs "Tecnologia de Arrojado".
+GROUP BY e.setor, it.ano, perfil_investidor;
+
+-- SELECT PARA PUCAR TUDO DE UMA VEZ, JÁ COM AS VARIÁVEIS:
+
+SELECT 
+            setor,
+            
+            -- Retorna o número total de ações disponíveis para este perfil neste setor
+            SUM(qtd_empresas) as total_acoes_disponiveis,
+            
+            -- Cálculos de média ponderada (Soma total / Quantidade total)
+            TRUNCATE(SUM(soma_retorno) / SUM(qtd_empresas), 2) as rentabilidade_periodo,
+            TRUNCATE(SUM(soma_volatilidade) / SUM(qtd_empresas), 2) as volatilidade_periodo,
+            TRUNCATE(SUM(soma_dre) / SUM(qtd_empresas), 2) as DRE,
+            TRUNCATE(SUM(soma_ebitda) / SUM(qtd_empresas), 2) as EBITDA
+            
+        FROM dashboard_consolidado
+        WHERE ano_referencia IN   (2024)-- (${anosString})
+          AND perfil_investidor =  ('Conservador')-- '${perfil}'
+        GROUP BY setor
+        ORDER BY rentabilidade_periodo DESC;
+
+
+/*
  -- -------- PARA TER UMA NOÇÃO MELHOR, ESSA É A VIEW QUE SERVE PARA DIFERENCIAR OS PERFIS DE USUÁRIO, USAREI ELA COMO BASE PARA MODIFICAR AS OUTRAS VIEWS; ESTOU FAZENDO TESTES AINDA.
  
 CREATE OR REPLACE VIEW acoes_com_perfil AS
@@ -1097,5 +1168,5 @@ select setor, rentabilidade_periodo from dashboard_setorial_base where ano_refer
 
 
 use smart_investment;
-
+*/
 
