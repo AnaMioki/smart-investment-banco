@@ -1050,11 +1050,13 @@ SELECT
             TRUNCATE(SUM(soma_dre) / SUM(qtd_empresas), 2) as DRE,
             TRUNCATE(SUM(soma_ebitda) / SUM(qtd_empresas), 2) as EBITDA
             
-        FROM dashboard_consolidado
+        FROM dashboard_consolidado_usuario
         WHERE ano_referencia IN   (2024)-- (${anosString})
           AND perfil_investidor =  ('Conservador')-- '${perfil}'
         GROUP BY setor
         ORDER BY rentabilidade_periodo DESC;
+        
+
 
 
 /*
