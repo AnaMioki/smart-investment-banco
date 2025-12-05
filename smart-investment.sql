@@ -990,6 +990,8 @@ ORDER BY ticker, mes;
 
 -- VIEW PARA TELA SETORES E QUAISQUER MAIS QUE PRECISAR, JUNTO DO PERFIL DO USUÁRIO --
 
+
+
 CREATE OR REPLACE VIEW dashboard_consolidado_usuario AS
 SELECT 
     e.setor,
@@ -998,13 +1000,13 @@ SELECT
     -- === AQUI ESTÁ A FUSÃO DA LÓGICA DE PERFIL ===
     CASE 
         -- Regra Conservador: Volatilidade baixa (<15%) e P/VP justo (<=1)
-        WHEN sub_acoes.volatilidade_media_ano < 15 AND it.precoSobreValorPatrimonial <= 1 THEN 'Conservador'
+        WHEN sub_acoes.volatilidade_media_ano < 0.5 AND it.precoSobreValorPatrimonial <= 1 THEN 'Conservador'
         
         -- Regra Moderado: Volatilidade média (15-25%) e Rentabilidade consistente (8-20%)
-        WHEN sub_acoes.volatilidade_media_ano BETWEEN 15 AND 25 AND it.rentabilidadeAnual BETWEEN 8 AND 20 THEN 'Moderado'
+        WHEN sub_acoes.volatilidade_media_ano < 1.5 AND it.rentabilidadeAnual BETWEEN 1 AND 20  THEN 'Moderado'
         
         -- Regra Arrojado: Alta rentabilidade (>15%) e aceita alta volatilidade (>25%)
-        WHEN it.rentabilidadeAnual > 15 AND sub_acoes.volatilidade_media_ano > 25 THEN 'Arrojado'
+        WHEN sub_acoes.volatilidade_media_ano BETWEEN  0.5 AND  4 AND it.rentabilidadeAnual > 5  THEN 'Arrojado'
         
         -- Se não cair em nenhuma regra, é Neutro
         ELSE 'Neutro'
