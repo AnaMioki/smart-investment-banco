@@ -1040,7 +1040,7 @@ GROUP BY e.setor, it.ano, perfil_investidor;
 
 -- SELECT PARA PUCAR TUDO DE UMA VEZ, JÁ COM AS VARIÁVEIS:
 
-SELECT 
+    SELECT 
             setor,
             
             -- Retorna o número total de ações disponíveis para este perfil neste setor
@@ -1053,8 +1053,8 @@ SELECT
             TRUNCATE(SUM(soma_ebitda) / SUM(qtd_empresas), 2) as EBITDA
             
         FROM dashboard_consolidado_usuario
-        WHERE ano_referencia IN   (2024)-- (${anosString})
-          AND perfil_investidor =  ('Conservador')-- '${perfil}'
+        WHERE ano_referencia IN (2024)-- (${anosString})
+          AND perfil_investidor =  ('Moderado') COLLATE utf8mb4_unicode_ci -- '${perfil}'
         GROUP BY setor
         ORDER BY rentabilidade_periodo DESC;
         
