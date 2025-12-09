@@ -48,7 +48,7 @@ tipo VARCHAR(30),
 dtNotificacao DATETIME DEFAULT CURRENT_TIMESTAMP(),
 lido TINYINT DEFAULT 0,
 CONSTRAINT chkTipoNotificacoes
-		CHECK (tipo IN ('Ação sugerida', 'Ação Favoritada', 'Alerta')),
+		CHECK (tipo IN ('Ação sugerida', 'Ação favoritada', 'Alerta')),
 mensagem VARCHAR(255),
 fkAcoes INT NOT NULL,
 CONSTRAINT fkAcoesNotificacoes FOREIGN KEY (fkAcoes) REFERENCES empresa(idEmpresa),
