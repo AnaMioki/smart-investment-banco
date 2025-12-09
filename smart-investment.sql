@@ -10,7 +10,7 @@ email VARCHAR(60) NOT NULL UNIQUE,
 senha VARCHAR(255) NOT NULL,
 perfil VARCHAR(20),
 	CONSTRAINT chkPerfil 
-		CHECK (perfil IN ('Conservador', 'Moderado', 'Arrojado', 'Administrador'))
+			CHECK (perfil IN ('Conservador', 'Moderado', 'Arrojado', 'Administrador'))
 ); 
 
 CREATE TABLE empresa (
@@ -188,62 +188,7 @@ truncate table empresa ; */
 
 --             INSERT PARA AJUDAR A ENTENDER OS DADOS      --
  
--- Inserir usuários
-INSERT INTO usuario (nome, dtNascimento, email, senha, perfil) VALUES
-('Ana Silva', '1985-03-15', 'ana.silva@email.com', '$2y$10$abc123', 'Conservador'),
-('Carlos Oliveira', '1992-07-22', 'carlos.oliveira@email.com', '$2y$10$def456', 'Moderado'),
-('Marina Costa', '1988-11-30', 'marina.costa@email.com', '$2y$10$ghi789', 'Arrojado'),
-('Roberto Santos', '1979-05-18', 'roberto.santos@email.com', '$2y$10$jkl012', 'Conservador'),
-('Juliana Lima', '1995-09-25', 'juliana.lima@email.com', '$2y$10$mno345', 'Moderado');
-
--- Inserir empresas
-INSERT INTO empresa (nome, ticker, setor, logo) VALUES
-('Vale S.A.', 'VALE3', 'Mineração', 'vale_logo.png'),
-('Petrobras', 'PETR4', 'Energia', 'petrobras_logo.png'),
-('Itaú Unibanco', 'ITUB4', 'Financeiro', 'itau_logo.png'),
-('Ambev S.A.', 'ABEV3', 'Bebidas', 'ambev_logo.png'),
-('Magazine Luiza', 'MGLU3', 'Varejo', 'magalu_logo.png');
-
--- Inserir ações
-INSERT INTO acoes (dtAtual, precoAbertura, precoFechamento, precoMaisAlto, precoMaisBaixo, volume, fkEmpresa) VALUES
-('2024-05-20', 68.90, 70.15, 71.20, 68.50, 25000000, 1),
-('2024-05-20', 32.45, 33.10, 33.80, 32.10, 18000000, 2),
-('2024-05-20', 34.20, 35.05, 35.60, 34.00, 22000000, 3),
-('2024-05-20', 14.80, 15.25, 15.40, 14.65, 15000000, 4),
-('2024-05-20', 2.15, 2.08, 2.20, 2.05, 35000000, 5);
-
--- Inserir ações favoritadas
-INSERT INTO acoesFavoritadas (fkAcoes, fkUsuario) VALUES
-(1, 1), -- Ana favorita Vale
-(3, 2), -- Carlos favorita Itaú
-(5, 3), -- Marina favorita Magazine Luiza
-(2, 4), -- Roberto favorita Petrobras
-(4, 5); -- Juliana favorita Ambev
-
--- Inserir notificações
-INSERT INTO notificacoes (tipo, mensagem, fkAcoes, fkUsuario) VALUES
-('Ação Favoritada', 'VALE3 atingiu seu preço-alvo recomendado', 1, 1),
-('Alerta', 'PETR4 caiu mais de 2% no dia', 2, 2),
-('Ação sugerida', 'ITUB4 é uma boa oportunidade para seu perfil', 3, 3),
-('Alerta', 'ABEV3 apresentou alta volumétrica', 4, 4),
-('Ação Favoritada', 'MGLU3 atingiu nova máxima do mês', 5, 5);
-
--- Inserir registros de log
-INSERT INTO log (tipo, dtLog, mensagemErro) VALUES
-('Sucesso', NOW(), 'Usuário 1 favoritou ação VALE3 com sucesso'),
-('Alerta', NOW(), 'Variação anormal detectada em PETR4'),
-('Erro', NOW(), 'Falha no envio de email para usuário 3'),
-('Sucesso', NOW(), 'Cálculo de indicadores concluído para 05/05/2024'),
-('Alerta', NOW(), 'Tentativa de acesso não autorizado detectada');
-
--- Inserir informações temporais
-INSERT INTO infoTemporal (valorMercado, patrimonioLiquido, patrimonioLiquidoAcao, multiploSetorial, rentabilidadeAnual, precoSobreValorPatrimonial, EBTDA, DRE, fkEmpresa, ano) VALUES
-(450.50, 280.30, 35.20, 8, 12.5, 1.98, 45.60, 120.30, 1, 2025),
-(320.25, 190.15, 28.10, 6, 8.7, 1.45, 32.10, 98.40, 2, 2025),
-(280.80, 165.90, 22.50, 10, 15.2, 2.10, 28.90, 110.20, 3, 2025),
-(180.40, 95.60, 12.30, 12, 18.3, 2.45, 19.20, 75.80, 4, 2025),
-(450.50, 280.30, 35.20, 8, 9, 1.98, 45.60, 120.30, 1, 2024),
-(45.20, 28.40, 3.15, 15, 22.1, 3.20, 8.90, 25.30, 5, 2025);
+INSERT INTO usuario VALUES (DEFAULT, 'administrador', '0001-01-01', 'smart@admin.com', '9afea1f1c0c5c232b8c922f8dee2bfaae37de077ac32a549ad85a6c7111ced7b', 'Administrador');
 
 -- Consultas para verificação dos dados
 SELECT '=== USUÁRIOS ===' AS '';
@@ -482,7 +427,7 @@ SELECT
     
     -- Agora sim: Soma PURA (sem multiplicar pelos dias de cotação)
     SUM(it.rentabilidadeAnual) as soma_retorno,
-    SUM(it.DRE) as soma_dre,
+    SUM(it.valorMercado) as soma_dre,
     SUM(it.EBITDA) as soma_ebitda,
     
     -- Soma da Volatilidade (que já vem compactada da subquery abaixo)
@@ -1017,7 +962,7 @@ SELECT
     
     -- Somas para calcular as médias ponderadas depois
     SUM(it.rentabilidadeAnual) as soma_retorno,
-    SUM(it.DRE) as soma_dre,
+    SUM(it.valorMercado) as soma_dre,
     SUM(it.EBITDA) as soma_ebitda,
     SUM(sub_acoes.volatilidade_media_ano) as soma_volatilidade
 
